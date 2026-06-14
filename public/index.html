@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standup Mood Check-in</title>
+  <style>
+    :root {
+      /* E.ON brand palette */
+      --eon-red:       #EA1B0A;
+      --eon-red-dark:  #C01508;
+      --eon-red-soft:  #EA1B0A18;
+      --eon-charcoal:  #1A1A1A;
+      --eon-dark:      #2D2D2D;
+      --eon-mid:       #4A4A4A;
+      --eon-light:     #F5F5F5;
+      --eon-white:     #FFFFFF;
+      --eon-border:    #E0E0E0;
+
+      --bg:          var(--eon-light);
+      --surface:     var(--eon-white);
+      --border:      var(--eon-border);
+      --accent:      var(--eon-red);
+      --accent-soft: var(--eon-red-soft);
+      --text:        var(--eon-charcoal);
+      --muted:       var(--eon-mid);
+      --radius:      8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--eon-charcoal);
+      border-bottom: 3px solid var(--eon-red);
+      height: 60px;
+    }
+
+    header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: var(--eon-white);
+    }
+
+    /* E.ON wordmark block */
+    .eon-logo {
+      background: var(--eon-red);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .room-badge {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .room-badge:hover { background: rgba(255,255,255,0.16); }
+    .room-badge .code { font-weight: 700; letter-spacing: 2px; font-size: 15px; }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .main {
+      width: 100%;
+      max-width: 860px;
+      padding: 32px 24px;
+      flex: 1;
+    }
+
+    /* ── Join screen ── */
+    #join-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 28px;
+    }
+
+    .join-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--eon-red);
+      border-radius: var(--radius);
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .join-card h2 { font-size: 22px; font-weight: 700; text-align: center; color: var(--eon-charcoal); }
+    .join-card p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+    label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    input {
+      background: var(--eon-white);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    input:focus {
+      border-color: var(--eon-red);
+      box-shadow: 0 0 0 3px var(--eon-red-soft);
+    }
+    input::placeholder { color: #bbb; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 20px;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: default; }
+
+    .btn-primary { background: var(--eon-red); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--eon-red-dark); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1.5px solid var(--eon-charcoal);
+      color: var(--eon-charcoal);
+    }
+    .btn-ghost:hover { background: var(--eon-charcoal); color: #fff; }
+
+    /* ── App screen ── */
+    #app-screen { display: none; flex-direction: column; gap: 28px; }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .mood-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mood-btn {
+      flex: 1;
+      min-width: 120px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+
+    .mood-btn:hover { border-color: var(--eon-red); background: var(--eon-red-soft); }
+    .mood-btn:active { transform: scale(0.97); }
+    .mood-btn.selected {
+      border-color: var(--eon-red);
+      background: var(--eon-red-soft);
+      box-shadow: 0 0 0 1px var(--eon-red);
+    }
+
+    .mood-btn .emoji { font-size: 32px; line-height: 1; }
+    .mood-btn .label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .mood-btn .sublabel { font-size: 11px; color: var(--muted); }
+
+    /* Members grid */
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .member-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      position: relative;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .member-card.has-mood {
+      border-color: var(--eon-red);
+      border-top-width: 3px;
+    }
+
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--eon-red-soft);
+      border: 2px solid var(--eon-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--eon-red);
+    }
+
+    .member-name {
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .member-mood-emoji { font-size: 28px; line-height: 1; }
+
+    .member-mood-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .waiting-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .waiting-dots span {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--muted);
+      animation: bounce 1.2s infinite;
+    }
+    .waiting-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .waiting-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(1); opacity: 0.5; }
+      40% { transform: scale(1.4); opacity: 1; }
+    }
+
+    .you-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--eon-red);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+
+    /* Summary bar */
+    .summary-bar {
+      background: var(--eon-charcoal);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .summary-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 56px;
+    }
+    .summary-stat .num { font-size: 22px; font-weight: 700; color: #fff; }
+    .summary-stat .lbl { font-size: 11px; color: #999; }
+
+    .summary-divider { width: 1px; height: 36px; background: #444; }
+
+    .all-ready-banner {
+      display: none;
+      background: #f0fdf4;
+      border: 2px solid #16a34a;
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #15803d;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; } }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Mood colors on member cards */
+    [data-mood="blazing"] .member-avatar { border-color: #f97316; color: #f97316; background: #fff7ed; }
+    [data-mood="great"]   .member-avatar { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+    [data-mood="okay"]    .member-avatar { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    [data-mood="meh"]     .member-avatar { border-color: #ca8a04; color: #ca8a04; background: #fefce8; }
+    [data-mood="rough"]   .member-avatar { border-color: var(--eon-red); color: var(--eon-red); background: #fff1f0; }
+
+    /* Toaster */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--eon-charcoal);
+      color: #fff;
+      padding: 12px 20px;
+      border-left: 4px solid var(--eon-red);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: none; }
+
+    @media (max-width: 600px) {
+      .join-card { padding: 28px 20px; }
+      .mood-btn { min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Standup Mood Check-in</h1>
+  <div id="room-badge" class="room-badge" style="display:none" onclick="copyRoomCode()">
+    <span class="status-dot"></span>
+    Room <span class="code" id="room-code-display">—</span>
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ── JOIN SCREEN ── -->
+  <div id="join-screen">
+    <div class="join-card">
+      <h2>👋 How are you feeling?</h2>
+      <p>Enter your name and join your team's daily standup mood check-in.</p>
+
+      <div class="field">
+        <label for="name-input">Your name</label>
+        <input id="name-input" type="text" placeholder="e.g. Alex" maxlength="32" />
+      </div>
+
+      <button class="btn-primary" onclick="joinRoom(null)">Create a new room</button>
+
+      <div class="divider">or join existing</div>
+
+      <div class="field">
+        <label for="room-input">Room code</label>
+        <input id="room-input" type="text" placeholder="e.g. AB12CD" maxlength="6"
+               oninput="this.value=this.value.toUpperCase()" />
+      </div>
+
+      <button class="btn-primary" onclick="joinRoom(document.getElementById('room-input').value)">
+        Join room
+      </button>
+    </div>
+  </div>
+
+  <!-- ── APP SCREEN ── -->
+  <div id="app-screen">
+
+    <div id="all-ready-banner" class="all-ready-banner">
+      🚀 Everyone's checked in — ready to start the standup!
+    </div>
+
+    <!-- Mood picker -->
+    <section>
+      <div class="section-title">Your mood right now</div>
+      <div class="mood-grid" id="mood-grid">
+        <button class="mood-btn" data-mood="blazing" onclick="selectMood('blazing')">
+          <span class="emoji">🔥</span>
+          <span class="label">Blazing</span>
+          <span class="sublabel">On fire today</span>
+        </button>
+        <button class="mood-btn" data-mood="great" onclick="selectMood('great')">
+          <span class="emoji">😄</span>
+          <span class="label">Great</span>
+          <span class="sublabel">Feeling good</span>
+        </button>
+        <button class="mood-btn" data-mood="okay" onclick="selectMood('okay')">
+          <span class="emoji">😐</span>
+          <span class="label">Okay</span>
+          <span class="sublabel">Getting by</span>
+        </button>
+        <button class="mood-btn" data-mood="meh" onclick="selectMood('meh')">
+          <span class="emoji">😶</span>
+          <span class="label">Meh</span>
+          <span class="sublabel">Could be better</span>
+        </button>
+        <button class="mood-btn" data-mood="rough" onclick="selectMood('rough')">
+          <span class="emoji">😓</span>
+          <span class="label">Rough</span>
+          <span class="sublabel">Need support</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Summary bar -->
+    <div class="summary-bar">
+      <div class="summary-stat">
+        <span class="num" id="stat-total">0</span>
+        <span class="lbl">In room</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat">
+        <span class="num" id="stat-ready">0</span>
+        <span class="lbl">Checked in</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div id="mood-summary" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn-ghost" onclick="resetMoods()" style="font-size:13px; padding:8px 14px;">
+          Reset all
+        </button>
+        <button class="btn-primary" onclick="copyRoomLink()" style="font-size:13px; padding:8px 14px;">
+          Invite teammates
+        </button>
+      </div>
+    </div>
+
+    <!-- Team grid -->
+    <section>
+      <div class="section-title">Team</div>
+      <div class="members-grid" id="members-grid"></div>
+    </section>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const MOOD_META = {
+  blazing: { emoji: "🔥", label: "Blazing" },
+  great:   { emoji: "😄", label: "Great" },
+  okay:    { emoji: "😐", label: "Okay" },
+  meh:     { emoji: "😶", label: "Meh" },
+  rough:   { emoji: "😓", label: "Rough" },
+};
+
+const WS_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/ws";
+
+let ws = null;
+let myId = null;
+let myRoom = null;
+let myMood = null;
+let reconnectTimer = null;
+let members = [];
+
+// ── Pre-fill room from URL ──────────────────────────────
+const urlParams = new URLSearchParams(location.search);
+const roomFromUrl = urlParams.get("room");
+if (roomFromUrl) {
+  document.getElementById("room-input").value = roomFromUrl.toUpperCase();
+}
+
+// ── WebSocket ───────────────────────────────────────────
+function connect(onOpen) {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    clearTimeout(reconnectTimer);
+    if (onOpen) onOpen();
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "joined") {
+      myId = msg.userId;
+      myRoom = msg.room;
+      members = msg.members;
+      showApp();
+      renderAll();
+    } else if (msg.type === "update") {
+      members = msg.members;
+      renderAll();
+    }
+  };
+
+  ws.onclose = () => {
+    reconnectTimer = setTimeout(() => connect(() => {
+      // Re-join if we had a room
+      if (myRoom && myId) {
+        const name = members.find(m => m.id === myId)?.name || "You";
+        sendJoin(name, myRoom);
+      }
+    }), 2000);
+  };
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(obj));
+  }
+}
+
+function sendJoin(name, room) {
+  send({ type: "join", name, room: room || undefined });
+}
+
+// ── Actions ─────────────────────────────────────────────
+function joinRoom(roomCode) {
+  const name = document.getElementById("name-input").value.trim();
+  if (!name) {
+    document.getElementById("name-input").focus();
+    return;
+  }
+  connect(() => sendJoin(name, roomCode || null));
+}
+
+function selectMood(mood) {
+  myMood = mood;
+  send({ type: "mood", mood });
+  document.querySelectorAll(".mood-btn").forEach(b => {
+    b.classList.toggle("selected", b.dataset.mood === mood);
+  });
+}
+
+function resetMoods() {
+  send({ type: "reset" });
+  myMood = null;
+  document.querySelectorAll(".mood-btn").forEach(b => b.classList.remove("selected"));
+}
+
+// ── Render ───────────────────────────────────────────────
+function showApp() {
+  document.getElementById("join-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "flex";
+  document.getElementById("app-screen").style.flexDirection = "column";
+  document.getElementById("app-screen").style.gap = "28px";
+  document.getElementById("room-badge").style.display = "flex";
+  document.getElementById("room-code-display").textContent = myRoom;
+
+  const url = new URL(location.href);
+  url.searchParams.set("room", myRoom);
+  history.replaceState({}, "", url.toString());
+}
+
+function renderAll() {
+  renderMembers();
+  renderSummary();
+  checkAllReady();
+}
+
+function renderMembers() {
+  const grid = document.getElementById("members-grid");
+  grid.innerHTML = "";
+  members.forEach(m => {
+    const mood = m.mood ? MOOD_META[m.mood] : null;
+    const initials = m.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    const card = document.createElement("div");
+    card.className = "member-card" + (mood ? " has-mood" : "");
+    card.dataset.mood = m.mood || "";
+    card.innerHTML = `
+      ${m.id === myId ? '<span class="you-badge">You</span>' : ""}
+      <div class="member-avatar">${initials}</div>
+      <div class="member-name">${esc(m.name)}</div>
+      ${mood
+        ? `<div class="member-mood-emoji">${mood.emoji}</div>
+           <div class="member-mood-label">${mood.label}</div>`
+        : `<div class="waiting-dots">
+             <span></span><span></span><span></span>
+           </div>
+           <div class="member-mood-label" style="color:var(--muted)">Choosing…</div>`
+      }
+    `;
+    grid.appendChild(card);
+  });
+
+  // Restore selected mood button
+  if (myMood) {
+    document.querySelectorAll(".mood-btn").forEach(b => {
+      b.classList.toggle("selected", b.dataset.mood === myMood);
+    });
+  }
+}
+
+function renderSummary() {
+  const total = members.length;
+  const ready = members.filter(m => m.ready).length;
+  document.getElementById("stat-total").textContent = total;
+  document.getElementById("stat-ready").textContent = ready;
+
+  // Mood breakdown
+  const counts = {};
+  members.forEach(m => { if (m.mood) counts[m.mood] = (counts[m.mood] || 0) + 1; });
+  const summaryEl = document.getElementById("mood-summary");
+  summaryEl.innerHTML = Object.entries(counts).map(([mood, count]) => {
+    const meta = MOOD_META[mood];
+    return `<div class="summary-stat">
+      <span class="num">${meta.emoji} ${count}</span>
+      <span class="lbl">${meta.label}</span>
+    </div>`;
+  }).join("");
+}
+
+function checkAllReady() {
+  const banner = document.getElementById("all-ready-banner");
+  const allReady = members.length > 0 && members.every(m => m.ready);
+  banner.style.display = allReady ? "block" : "none";
+}
+
+// ── Invite ───────────────────────────────────────────────
+function copyRoomLink() {
+  const url = new URL(location.href);
+  url.searchParams.set("room", myRoom);
+  navigator.clipboard.writeText(url.toString()).then(() => showToast("Link copied!"));
+}
+
+function copyRoomCode() {
+  navigator.clipboard.writeText(myRoom).then(() => showToast(`Room code ${myRoom} copied!`));
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function esc(str) {
+  return str.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// Allow Enter key to join
+document.getElementById("name-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") joinRoom(document.getElementById("room-input").value || null);
+});
+document.getElementById("room-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") joinRoom(e.target.value || null);
+});
+</script>
+</body>
+</html>
