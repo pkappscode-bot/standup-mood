@@ -6,7 +6,6 @@
   <title>Standup Mood Check-in</title>
   <style>
     :root {
-      /* E.ON brand palette */
       --eon-red:       #EA1B0A;
       --eon-red-dark:  #C01508;
       --eon-red-soft:  #EA1B0A18;
@@ -55,19 +54,6 @@
       font-weight: 700;
       letter-spacing: 0.2px;
       color: var(--eon-white);
-    }
-
-    /* E.ON wordmark block */
-    .eon-logo {
-      background: var(--eon-red);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 4px 10px;
-      border-radius: 3px;
-      line-height: 1;
-      flex-shrink: 0;
     }
 
     .room-badge {
@@ -133,7 +119,6 @@
     .join-card p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.5; }
 
     label { font-size: 13px; color: var(--muted); font-weight: 500; }
-
     .field { display: flex; flex-direction: column; gap: 6px; }
 
     input {
@@ -174,7 +159,7 @@
       font-size: 15px;
       font-weight: 600;
       padding: 12px 20px;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      transition: background 0.15s, transform 0.1s;
     }
     button:active { transform: scale(0.98); }
     button:disabled { opacity: 0.4; cursor: default; }
@@ -189,6 +174,15 @@
     }
     .btn-ghost:hover { background: var(--eon-charcoal); color: #fff; }
 
+    .btn-danger {
+      background: transparent;
+      border: 1.5px solid var(--eon-red);
+      color: var(--eon-red);
+      font-size: 13px;
+      padding: 8px 16px;
+    }
+    .btn-danger:hover { background: var(--eon-red); color: #fff; }
+
     /* ── App screen ── */
     #app-screen { display: none; flex-direction: column; gap: 28px; }
 
@@ -201,6 +195,32 @@
       margin-bottom: 14px;
     }
 
+    /* Admin panel */
+    #admin-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--eon-border);
+      border-left: 4px solid var(--eon-red);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #admin-panel .admin-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--eon-red);
+    }
+    #admin-panel p {
+      font-size: 13px;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    /* Mood picker */
     .mood-grid {
       display: flex;
       gap: 10px;
@@ -221,7 +241,6 @@
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s, transform 0.1s;
     }
-
     .mood-btn:hover { border-color: var(--eon-red); background: var(--eon-red-soft); }
     .mood-btn:active { transform: scale(0.97); }
     .mood-btn.selected {
@@ -229,7 +248,6 @@
       background: var(--eon-red-soft);
       box-shadow: 0 0 0 1px var(--eon-red);
     }
-
     .mood-btn .emoji { font-size: 32px; line-height: 1; }
     .mood-btn .label { font-size: 13px; font-weight: 600; color: var(--text); }
     .mood-btn .sublabel { font-size: 11px; color: var(--muted); }
@@ -250,15 +268,15 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      transition: border-color 0.25s, box-shadow 0.25s;
+      transition: border-color 0.25s, opacity 0.25s;
       position: relative;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
-
     .member-card.has-mood {
       border-color: var(--eon-red);
       border-top-width: 3px;
     }
+    .member-card.offline { opacity: 0.5; }
 
     .member-avatar {
       width: 48px;
@@ -285,18 +303,9 @@
     }
 
     .member-mood-emoji { font-size: 28px; line-height: 1; }
+    .member-mood-label { font-size: 12px; color: var(--muted); text-align: center; }
 
-    .member-mood-label {
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .waiting-dots {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
+    .waiting-dots { display: flex; gap: 4px; align-items: center; }
     .waiting-dots span {
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--muted);
@@ -309,17 +318,17 @@
       40% { transform: scale(1.4); opacity: 1; }
     }
 
-    .you-badge {
+    /* Badges */
+    .badge {
       position: absolute;
       top: 8px;
-      right: 8px;
       font-size: 10px;
       font-weight: 700;
-      background: var(--eon-red);
-      color: #fff;
       padding: 2px 7px;
       border-radius: 99px;
     }
+    .badge-you  { right: 8px; background: var(--eon-charcoal); color: #fff; }
+    .badge-admin { left: 8px; background: var(--eon-red); color: #fff; }
 
     /* Summary bar */
     .summary-bar {
@@ -331,17 +340,9 @@
       gap: 16px;
       flex-wrap: wrap;
     }
-
-    .summary-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      min-width: 56px;
-    }
+    .summary-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; }
     .summary-stat .num { font-size: 22px; font-weight: 700; color: #fff; }
     .summary-stat .lbl { font-size: 11px; color: #999; }
-
     .summary-divider { width: 1px; height: 36px; background: #444; }
 
     .all-ready-banner {
@@ -358,16 +359,14 @@
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; } }
 
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-    /* Mood colors on member cards */
+    /* Mood colors on cards */
     [data-mood="blazing"] .member-avatar { border-color: #f97316; color: #f97316; background: #fff7ed; }
     [data-mood="great"]   .member-avatar { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
     [data-mood="okay"]    .member-avatar { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
     [data-mood="meh"]     .member-avatar { border-color: #ca8a04; color: #ca8a04; background: #fefce8; }
     [data-mood="rough"]   .member-avatar { border-color: var(--eon-red); color: var(--eon-red); background: #fff1f0; }
 
-    /* Toaster */
+    /* Toast */
     #toast {
       position: fixed;
       bottom: 28px;
@@ -384,8 +383,35 @@
       transition: opacity 0.25s, transform 0.25s;
       pointer-events: none;
       z-index: 100;
+      max-width: 320px;
     }
     #toast.show { opacity: 1; transform: none; }
+
+    /* Confirm dialog overlay */
+    #confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirm-overlay.show { display: flex; }
+    .confirm-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 32px 36px;
+      max-width: 380px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .confirm-card h3 { font-size: 18px; font-weight: 700; }
+    .confirm-card p { font-size: 14px; color: var(--muted); line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
     @media (max-width: 600px) {
       .join-card { padding: 28px 20px; }
@@ -442,10 +468,17 @@
       🚀 Everyone's checked in — ready to start the standup!
     </div>
 
+    <!-- Admin panel (only visible to room creator) -->
+    <div id="admin-panel">
+      <span class="admin-label">Admin Controls</span>
+      <p>As the room creator you can reset the room before each standup.</p>
+      <button class="btn-danger" onclick="confirmReset()">Reset Room</button>
+    </div>
+
     <!-- Mood picker -->
     <section>
       <div class="section-title">Your mood right now</div>
-      <div class="mood-grid" id="mood-grid">
+      <div class="mood-grid">
         <button class="mood-btn" data-mood="blazing" onclick="selectMood('blazing')">
           <span class="emoji">🔥</span>
           <span class="label">Blazing</span>
@@ -487,10 +520,7 @@
       </div>
       <div class="summary-divider"></div>
       <div id="mood-summary" style="display:flex; gap:14px; flex-wrap:wrap;"></div>
-      <div style="margin-left:auto; display:flex; gap:10px;">
-        <button class="btn-ghost" onclick="resetMoods()" style="font-size:13px; padding:8px 14px;">
-          Reset all
-        </button>
+      <div style="margin-left:auto;">
         <button class="btn-primary" onclick="copyRoomLink()" style="font-size:13px; padding:8px 14px;">
           Invite teammates
         </button>
@@ -506,6 +536,18 @@
   </div>
 </div>
 
+<!-- Confirm reset dialog -->
+<div id="confirm-overlay">
+  <div class="confirm-card">
+    <h3>Reset room?</h3>
+    <p>This will remove all participants and clear all mood submissions. The room code stays the same. This cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-danger" onclick="executeReset()">Yes, reset</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -518,52 +560,94 @@ const MOOD_META = {
 };
 
 const WS_URL = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/ws";
+const LS_KEY = "standup_session";
 
 let ws = null;
 let myId = null;
 let myRoom = null;
 let myMood = null;
-let reconnectTimer = null;
+let amAdmin = false;
 let members = [];
+let reconnectTimer = null;
 
-// ── Pre-fill room from URL ──────────────────────────────
-const urlParams = new URLSearchParams(location.search);
-const roomFromUrl = urlParams.get("room");
-if (roomFromUrl) {
-  document.getElementById("room-input").value = roomFromUrl.toUpperCase();
+// ── Saved session (localStorage) ───────────────────────
+function savedSession() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveSession(data) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function clearSession() {
+  localStorage.removeItem(LS_KEY);
+}
+
+// ── Pre-fill from URL or localStorage ──────────────────
+const urlRoom = new URLSearchParams(location.search).get("room");
+const stored  = savedSession();
+
+if (urlRoom) {
+  document.getElementById("room-input").value = urlRoom.toUpperCase();
+} else if (stored.room) {
+  document.getElementById("room-input").value = stored.room;
+}
+if (stored.name) {
+  document.getElementById("name-input").value = stored.name;
 }
 
 // ── WebSocket ───────────────────────────────────────────
 function connect(onOpen) {
+  clearTimeout(reconnectTimer);
   ws = new WebSocket(WS_URL);
 
   ws.onopen = () => {
-    clearTimeout(reconnectTimer);
     if (onOpen) onOpen();
   };
 
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
+
     if (msg.type === "joined") {
-      myId = msg.userId;
-      myRoom = msg.room;
+      myId    = msg.userId;
+      myRoom  = msg.room;
+      amAdmin = msg.isAdmin;
       members = msg.members;
+      // Restore mood from server state
+      const me = members.find(m => m.id === myId);
+      myMood = me ? me.mood : null;
       showApp();
       renderAll();
+
     } else if (msg.type === "update") {
       members = msg.members;
+      const me = members.find(m => m.id === myId);
+      if (me) myMood = me.mood;
       renderAll();
+
+    } else if (msg.type === "room_reset") {
+      // Admin reset our room — clear local state and return to join screen
+      clearSession();
+      myId = myRoom = myMood = null;
+      amAdmin = false;
+      members = [];
+      showJoin();
+      showToast("The room was reset by the admin. Please re-enter your name to rejoin.", 5000);
+
+    } else if (msg.type === "error" && msg.msg === "no_session") {
+      // Cookie lost — clear and show join
+      clearSession();
+      showJoin();
     }
   };
 
   ws.onclose = () => {
-    reconnectTimer = setTimeout(() => connect(() => {
-      // Re-join if we had a room
-      if (myRoom && myId) {
-        const name = members.find(m => m.id === myId)?.name || "You";
-        sendJoin(name, myRoom);
-      }
-    }), 2000);
+    reconnectTimer = setTimeout(() => {
+      connect(() => {
+        // Server will auto-rejoin via cookie — nothing needed here
+      });
+    }, 2000);
   };
 }
 
@@ -573,98 +657,111 @@ function send(obj) {
   }
 }
 
-function sendJoin(name, room) {
-  send({ type: "join", name, room: room || undefined });
-}
-
 // ── Actions ─────────────────────────────────────────────
 function joinRoom(roomCode) {
   const name = document.getElementById("name-input").value.trim();
-  if (!name) {
-    document.getElementById("name-input").focus();
-    return;
-  }
-  connect(() => sendJoin(name, roomCode || null));
+  if (!name) { document.getElementById("name-input").focus(); return; }
+
+  const room = (roomCode || "").trim().toUpperCase() || null;
+  saveSession({ name, room: room || "" });
+
+  connect(() => send({ type: "join", name, room }));
 }
 
 function selectMood(mood) {
   myMood = mood;
   send({ type: "mood", mood });
-  document.querySelectorAll(".mood-btn").forEach(b => {
-    b.classList.toggle("selected", b.dataset.mood === mood);
-  });
+  document.querySelectorAll(".mood-btn").forEach(b =>
+    b.classList.toggle("selected", b.dataset.mood === mood)
+  );
 }
 
-function resetMoods() {
+function confirmReset() {
+  document.getElementById("confirm-overlay").classList.add("show");
+}
+function closeConfirm() {
+  document.getElementById("confirm-overlay").classList.remove("show");
+}
+function executeReset() {
+  closeConfirm();
   send({ type: "reset" });
-  myMood = null;
-  document.querySelectorAll(".mood-btn").forEach(b => b.classList.remove("selected"));
 }
 
-// ── Render ───────────────────────────────────────────────
+// ── Screens ──────────────────────────────────────────────
 function showApp() {
-  document.getElementById("join-screen").style.display = "none";
-  document.getElementById("app-screen").style.display = "flex";
+  document.getElementById("join-screen").style.display  = "none";
+  document.getElementById("app-screen").style.display   = "flex";
   document.getElementById("app-screen").style.flexDirection = "column";
-  document.getElementById("app-screen").style.gap = "28px";
-  document.getElementById("room-badge").style.display = "flex";
+  document.getElementById("app-screen").style.gap       = "28px";
+  document.getElementById("room-badge").style.display   = "flex";
   document.getElementById("room-code-display").textContent = myRoom;
+  document.getElementById("admin-panel").style.display  = amAdmin ? "flex" : "none";
 
   const url = new URL(location.href);
   url.searchParams.set("room", myRoom);
   history.replaceState({}, "", url.toString());
+
+  // Persist session
+  const stored = savedSession();
+  saveSession({ ...stored, room: myRoom });
 }
 
+function showJoin() {
+  document.getElementById("app-screen").style.display  = "none";
+  document.getElementById("room-badge").style.display  = "none";
+  document.getElementById("join-screen").style.display = "flex";
+  document.querySelectorAll(".mood-btn").forEach(b => b.classList.remove("selected"));
+  // Clear room from URL
+  const url = new URL(location.href);
+  url.searchParams.delete("room");
+  history.replaceState({}, "", url.toString());
+}
+
+// ── Render ───────────────────────────────────────────────
 function renderAll() {
   renderMembers();
   renderSummary();
   checkAllReady();
+  // Keep mood buttons in sync
+  document.querySelectorAll(".mood-btn").forEach(b =>
+    b.classList.toggle("selected", b.dataset.mood === myMood)
+  );
 }
 
 function renderMembers() {
   const grid = document.getElementById("members-grid");
   grid.innerHTML = "";
   members.forEach(m => {
-    const mood = m.mood ? MOOD_META[m.mood] : null;
+    const mood     = m.mood ? MOOD_META[m.mood] : null;
     const initials = m.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-    const card = document.createElement("div");
-    card.className = "member-card" + (mood ? " has-mood" : "");
+    const card     = document.createElement("div");
+    card.className = "member-card" + (mood ? " has-mood" : "") + (m.isOnline ? "" : " offline");
     card.dataset.mood = m.mood || "";
     card.innerHTML = `
-      ${m.id === myId ? '<span class="you-badge">You</span>' : ""}
-      <div class="member-avatar">${initials}</div>
+      ${m.isAdmin  ? '<span class="badge badge-admin">Admin</span>' : ""}
+      ${m.id === myId ? '<span class="badge badge-you">You</span>'  : ""}
+      <div class="member-avatar">${esc(initials)}</div>
       <div class="member-name">${esc(m.name)}</div>
       ${mood
         ? `<div class="member-mood-emoji">${mood.emoji}</div>
            <div class="member-mood-label">${mood.label}</div>`
-        : `<div class="waiting-dots">
-             <span></span><span></span><span></span>
-           </div>
+        : `<div class="waiting-dots"><span></span><span></span><span></span></div>
            <div class="member-mood-label" style="color:var(--muted)">Choosing…</div>`
       }
     `;
     grid.appendChild(card);
   });
-
-  // Restore selected mood button
-  if (myMood) {
-    document.querySelectorAll(".mood-btn").forEach(b => {
-      b.classList.toggle("selected", b.dataset.mood === myMood);
-    });
-  }
 }
 
 function renderSummary() {
-  const total = members.length;
-  const ready = members.filter(m => m.ready).length;
-  document.getElementById("stat-total").textContent = total;
-  document.getElementById("stat-ready").textContent = ready;
+  const online = members.filter(m => m.isOnline);
+  const ready  = members.filter(m => m.ready);
+  document.getElementById("stat-total").textContent = online.length;
+  document.getElementById("stat-ready").textContent = ready.length;
 
-  // Mood breakdown
   const counts = {};
   members.forEach(m => { if (m.mood) counts[m.mood] = (counts[m.mood] || 0) + 1; });
-  const summaryEl = document.getElementById("mood-summary");
-  summaryEl.innerHTML = Object.entries(counts).map(([mood, count]) => {
+  document.getElementById("mood-summary").innerHTML = Object.entries(counts).map(([mood, count]) => {
     const meta = MOOD_META[mood];
     return `<div class="summary-stat">
       <span class="num">${meta.emoji} ${count}</span>
@@ -674,9 +771,9 @@ function renderSummary() {
 }
 
 function checkAllReady() {
-  const banner = document.getElementById("all-ready-banner");
-  const allReady = members.length > 0 && members.every(m => m.ready);
-  banner.style.display = allReady ? "block" : "none";
+  const online  = members.filter(m => m.isOnline);
+  const allReady = online.length > 0 && online.every(m => m.ready);
+  document.getElementById("all-ready-banner").style.display = allReady ? "block" : "none";
 }
 
 // ── Invite ───────────────────────────────────────────────
@@ -685,29 +782,37 @@ function copyRoomLink() {
   url.searchParams.set("room", myRoom);
   navigator.clipboard.writeText(url.toString()).then(() => showToast("Link copied!"));
 }
-
 function copyRoomCode() {
   navigator.clipboard.writeText(myRoom).then(() => showToast(`Room code ${myRoom} copied!`));
 }
 
-function showToast(msg) {
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, duration = 2500) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2200);
+  setTimeout(() => t.classList.remove("show"), duration);
 }
 
 function esc(str) {
-  return str.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  return String(str).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])
+  );
 }
 
-// Allow Enter key to join
+// ── Enter key support ─────────────────────────────────────
 document.getElementById("name-input").addEventListener("keydown", e => {
   if (e.key === "Enter") joinRoom(document.getElementById("room-input").value || null);
 });
 document.getElementById("room-input").addEventListener("keydown", e => {
   if (e.key === "Enter") joinRoom(e.target.value || null);
 });
+
+// ── Auto-connect on load ──────────────────────────────────
+// The server will auto-rejoin via the HttpOnly session cookie.
+// We just open the WS and wait for the "joined" message.
+// If the session cookie is missing or the user has no room, the join screen stays visible.
+connect(() => { /* server handles rejoin via cookie */ });
 </script>
 </body>
 </html>
