@@ -413,6 +413,61 @@
     .confirm-card p { font-size: 14px; color: var(--muted); line-height: 1.5; }
     .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+    /* Disclaimer box */
+    .disclaimer {
+      width: 100%;
+      max-width: 420px;
+      background: #fffbeb;
+      border: 1.5px solid #f59e0b;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .disclaimer-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .disclaimer ul {
+      margin: 0;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .disclaimer li {
+      font-size: 12px;
+      color: #78350f;
+      line-height: 1.5;
+    }
+
+    /* Meeting name banner */
+    #meeting-banner {
+      display: none;
+      background: var(--eon-charcoal);
+      border-bottom: 3px solid var(--eon-red);
+      padding: 12px 24px;
+      text-align: center;
+    }
+    #meeting-banner .meeting-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 2px;
+    }
+    #meeting-banner .meeting-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
     @media (max-width: 600px) {
       .join-card { padding: 28px 20px; }
       .mood-btn { min-width: 90px; }
@@ -432,6 +487,12 @@
   </div>
 </header>
 
+<!-- Meeting name banner (shown only when a meeting name exists) -->
+<div id="meeting-banner">
+  <div class="meeting-label">Meeting</div>
+  <div class="meeting-name" id="meeting-name-display"></div>
+</div>
+
 <div class="main">
 
   <!-- ── JOIN SCREEN ── -->
@@ -443,6 +504,11 @@
       <div class="field">
         <label for="name-input">Your name</label>
         <input id="name-input" type="text" placeholder="e.g. Alex" maxlength="32" />
+      </div>
+
+      <div class="field">
+        <label for="meeting-name-input">Meeting name <span style="font-weight:400;color:#bbb">(optional)</span></label>
+        <input id="meeting-name-input" type="text" placeholder="e.g. Daily Standup – Product Team" maxlength="80" />
       </div>
 
       <button class="btn-primary" onclick="joinRoom(null)">Create a new room</button>
@@ -458,6 +524,16 @@
       <button class="btn-primary" onclick="joinRoom(document.getElementById('room-input').value)">
         Join room
       </button>
+    </div>
+
+    <div class="disclaimer">
+      <div class="disclaimer-title">⚠️ Disclaimer</div>
+      <ul>
+        <li>Do not enter confidential, personal, customer, business-sensitive, or protected information.</li>
+        <li>This tool is intended only for team mood checks and standup meetings.</li>
+        <li>All room and participant data is automatically deleted after 24 hours.</li>
+        <li>Information entered into this tool should be considered temporary.</li>
+      </ul>
     </div>
   </div>
 
@@ -566,6 +642,7 @@ let ws = null;
 let myId = null;
 let myRoom = null;
 let myMood = null;
+let myMeetingName = null;
 let amAdmin = false;
 let members = [];
 let reconnectTimer = null;
@@ -610,10 +687,11 @@ function connect(onOpen) {
     const msg = JSON.parse(e.data);
 
     if (msg.type === "joined") {
-      myId    = msg.userId;
-      myRoom  = msg.room;
-      amAdmin = msg.isAdmin;
-      members = msg.members;
+      myId          = msg.userId;
+      myRoom        = msg.room;
+      amAdmin       = msg.isAdmin;
+      myMeetingName = msg.meetingName || null;
+      members       = msg.members;
       // Restore mood from server state
       const me = members.find(m => m.id === myId);
       myMood = me ? me.mood : null;
@@ -621,15 +699,17 @@ function connect(onOpen) {
       renderAll();
 
     } else if (msg.type === "update") {
-      members = msg.members;
+      members       = msg.members;
+      myMeetingName = msg.meetingName || myMeetingName;
       const me = members.find(m => m.id === myId);
       if (me) myMood = me.mood;
+      renderMeetingBanner();
       renderAll();
 
     } else if (msg.type === "room_reset") {
       // Admin reset our room — clear local state and return to join screen
       clearSession();
-      myId = myRoom = myMood = null;
+      myId = myRoom = myMood = myMeetingName = null;
       amAdmin = false;
       members = [];
       showJoin();
@@ -663,9 +743,10 @@ function joinRoom(roomCode) {
   if (!name) { document.getElementById("name-input").focus(); return; }
 
   const room = (roomCode || "").trim().toUpperCase() || null;
+  const meetingName = document.getElementById("meeting-name-input").value.trim() || null;
   saveSession({ name, room: room || "" });
 
-  connect(() => send({ type: "join", name, room }));
+  connect(() => send({ type: "join", name, room, meetingName }));
 }
 
 function selectMood(mood) {
@@ -696,6 +777,7 @@ function showApp() {
   document.getElementById("room-badge").style.display   = "flex";
   document.getElementById("room-code-display").textContent = myRoom;
   document.getElementById("admin-panel").style.display  = amAdmin ? "flex" : "none";
+  renderMeetingBanner();
 
   const url = new URL(location.href);
   url.searchParams.set("room", myRoom);
@@ -707,14 +789,25 @@ function showApp() {
 }
 
 function showJoin() {
-  document.getElementById("app-screen").style.display  = "none";
-  document.getElementById("room-badge").style.display  = "none";
-  document.getElementById("join-screen").style.display = "flex";
+  document.getElementById("app-screen").style.display    = "none";
+  document.getElementById("room-badge").style.display    = "none";
+  document.getElementById("meeting-banner").style.display = "none";
+  document.getElementById("join-screen").style.display  = "flex";
   document.querySelectorAll(".mood-btn").forEach(b => b.classList.remove("selected"));
   // Clear room from URL
   const url = new URL(location.href);
   url.searchParams.delete("room");
   history.replaceState({}, "", url.toString());
+}
+
+function renderMeetingBanner() {
+  const banner = document.getElementById("meeting-banner");
+  if (myMeetingName) {
+    document.getElementById("meeting-name-display").textContent = myMeetingName;
+    banner.style.display = "block";
+  } else {
+    banner.style.display = "none";
+  }
 }
 
 // ── Render ───────────────────────────────────────────────
@@ -803,6 +896,9 @@ function esc(str) {
 // ── Enter key support ─────────────────────────────────────
 document.getElementById("name-input").addEventListener("keydown", e => {
   if (e.key === "Enter") joinRoom(document.getElementById("room-input").value || null);
+});
+document.getElementById("meeting-name-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") joinRoom(null);
 });
 document.getElementById("room-input").addEventListener("keydown", e => {
   if (e.key === "Enter") joinRoom(e.target.value || null);

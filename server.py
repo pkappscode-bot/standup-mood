@@ -29,9 +29,10 @@ async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
         await db.executescript("""
             CREATE TABLE IF NOT EXISTS rooms (
-                id         TEXT PRIMARY KEY,
-                creator_id TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                id            TEXT PRIMARY KEY,
+                creator_id    TEXT NOT NULL,
+                meeting_name  TEXT,
+                created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
             );
             CREATE TABLE IF NOT EXISTS users (
                 id         TEXT PRIMARY KEY,
@@ -49,6 +50,12 @@ async def init_db():
                 reset_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        # Migrate existing DBs that predate the meeting_name column.
+        try:
+            await db.execute("ALTER TABLE rooms ADD COLUMN meeting_name TEXT")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
         await db.commit()
 
 
@@ -79,11 +86,11 @@ async def db_room_members(room_id: str) -> list:
             return await cur.fetchall()
 
 
-async def db_create_room(room_id: str, creator_id: str):
+async def db_create_room(room_id: str, creator_id: str, meeting_name: str = None):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
-            "INSERT OR IGNORE INTO rooms (id, creator_id) VALUES (?, ?)",
-            (room_id, creator_id),
+            "INSERT OR IGNORE INTO rooms (id, creator_id, meeting_name) VALUES (?, ?, ?)",
+            (room_id, creator_id, meeting_name or None),
         )
         await db.commit()
 
@@ -170,6 +177,7 @@ async def broadcast_update(room_id: str, exclude_session: str = None):
     members = await db_room_members(room_id)
     payload = json.dumps({
         "type": "update",
+        "meetingName": room["meeting_name"],
         "members": members_payload(members, room["creator_id"]),
     })
     await broadcast(room_id, payload, exclude_session)
@@ -201,6 +209,7 @@ async def ws_handler(request):
             "room": user["room_id"],
             "userId": user["id"],
             "isAdmin": user["id"] == room["creator_id"],
+            "meetingName": room["meeting_name"],
             "members": members_payload(members, room["creator_id"]),
         }))
         await broadcast_update(user["room_id"], exclude_session=session_id)
@@ -219,6 +228,7 @@ async def ws_handler(request):
                 if kind == "join":
                     name = (data.get("name") or "Anonymous")[:32].strip()
                     room_id = (data.get("room") or "").strip().upper() or uuid.uuid4().hex[:6].upper()
+                    meeting_name = (data.get("meetingName") or "")[:80].strip() or None
 
                     # Refresh user session from DB (may have changed)
                     user = await db_get_user(session_id)
@@ -226,7 +236,7 @@ async def ws_handler(request):
 
                     room_exists = await db_get_room(room_id)
                     if not room_exists:
-                        await db_create_room(room_id, user_id)
+                        await db_create_room(room_id, user_id, meeting_name)
 
                     await db_upsert_user(user_id, session_id, name, room_id)
 
@@ -238,6 +248,7 @@ async def ws_handler(request):
                         "room": room_id,
                         "userId": user_id,
                         "isAdmin": user_id == room["creator_id"],
+                        "meetingName": room["meeting_name"],
                         "members": members_payload(members, room["creator_id"]),
                     }))
                     await broadcast_update(room_id, exclude_session=session_id)
